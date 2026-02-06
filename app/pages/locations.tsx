@@ -7,7 +7,10 @@ import { LocationForm } from "../components/LocationForm";
 import { Toast, type ToastType } from "../components/Toast";
 import { saveLocation } from "../lib/api/location/saveLocation";
 import { getAllLocations } from "../lib/api/location/getAllLocations";
+import { updateLocation } from "../lib/api/location/updateLocation";
+import { deleteLocation } from "../lib/api/location/deleteLocation";
 import type { LocationFormData } from "../components/LocationForm";
+import { LocationEditModal } from "../components/LocationEditModal";
 
 export function meta({ }: Route.MetaArgs) {
   return [
@@ -29,11 +32,15 @@ interface Location {
 
 export default function Locations() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const [toast, setToast] = useState<{
     message: string;
     type: ToastType;
   } | null>(null);
   const saveLocationMutation = saveLocation();
+  const updateLocationMutation = updateLocation();
+  const deleteLocationMutation = deleteLocation();
   const { data: locationsResponse, isLoading, error, refetch } = getAllLocations();
 
   useEffect(() => {
@@ -72,6 +79,75 @@ export default function Locations() {
       // Show error toast
       setToast({
         message: "Lokasyon eklenirken bir hata oluştu.",
+        type: "error",
+      });
+    }
+  };
+
+  const handleUpdateLocation = async (data: LocationFormData) => {
+    if (!selectedLocation) return;
+
+    try {
+      console.log("Updating location:", { id: selectedLocation.id, data });
+
+      // Call updateLocation API with request body
+      const response = await updateLocationMutation.mutateAsync({
+        params: {
+          path: { id: selectedLocation.id }
+        },
+        body: {
+          code: data.code,
+          name: data.name,
+          city: data.city,
+          country: data.country,
+        },
+      });
+
+      console.log("Location updated successfully:", response);
+      setIsEditModalOpen(false);
+      setSelectedLocation(null);
+      refetch();
+      // Show success toast
+      setToast({
+        message: "Lokasyon başarıyla güncellendi!",
+        type: "success",
+      });
+    } catch (error) {
+      console.error("Error updating location:", error);
+
+      // Show error toast
+      setToast({
+        message: "Lokasyon güncellenirken bir hata oluştu.",
+        type: "error",
+      });
+    }
+  };
+
+  const handleDeleteLocation = async (locationId: string) => {
+    if (!confirm("Bu lokasyonu silmek istediğinizden emin misiniz?")) {
+      return;
+    }
+
+    try {
+      console.log("Deleting location:", locationId);
+
+      await deleteLocationMutation.mutateAsync({
+        params: {
+            path: { id: locationId },
+        }
+      });
+
+      console.log("Location deleted successfully");
+      await refetch();
+
+      setToast({
+        message: "Lokasyon başarıyla silindi!",
+        type: "success",
+      });
+    } catch (error) {
+      console.error("Error deleting location:", error);
+      setToast({
+        message: "Lokasyon silinirken bir hata oluştu.",
         type: "error",
       });
     }
@@ -206,6 +282,10 @@ export default function Locations() {
                             <button
                               className="p-2 text-blue-900 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors cursor-pointer"
                               title="Edit"
+                              onClick={() => {
+                                setSelectedLocation(location);
+                                setIsEditModalOpen(true);
+                              }}
                             >
                               <span className="material-symbols-outlined text-[20px]">
                                 edit
@@ -214,6 +294,7 @@ export default function Locations() {
                             <button
                               className="p-2 text-gray-400 hover:text-primary hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors cursor-pointer"
                               title="Delete"
+                              onClick={() => handleDeleteLocation(location.id)}
                             >
                               <span className="material-symbols-outlined text-[20px]">
                                 delete
@@ -274,6 +355,18 @@ export default function Locations() {
             <LocationForm onSubmit={handleCreateLocation} />
           </Modal>
         )}
+
+        {/* Edit Location Modal */}
+        <LocationEditModal
+          isOpen={isEditModalOpen}
+          location={selectedLocation}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setSelectedLocation(null);
+          }}
+          onSubmit={handleUpdateLocation}
+        />
+
         {/* Toast Notification */}
         {toast && (
           <Toast

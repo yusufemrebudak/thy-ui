@@ -9,18 +9,22 @@ export interface LocationFormData {
 
 interface LocationFormProps {
   onSubmit: SubmitHandler<LocationFormData>;
+  initialData?: Partial<LocationFormData>;
+  formId?: string;
 }
 
-export function LocationForm({ onSubmit }: LocationFormProps) {
+export function LocationForm({ onSubmit, initialData, formId = "location-form" }: LocationFormProps) {
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LocationFormData>();
+  } = useForm<LocationFormData>({
+    defaultValues: initialData,
+  });
 
   return (
     <form
-      id="location-form"
+      id={formId}
       className="flex flex-col gap-6"
       onSubmit={handleSubmit(onSubmit)}
     >
@@ -113,28 +117,16 @@ export function LocationForm({ onSubmit }: LocationFormProps) {
                 public
               </span>
             </span>
-            <select
-              className={`w-full h-12 pl-11 pr-10 bg-gray-50 dark:bg-[#211113] border rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all appearance-none cursor-pointer ${errors.country
+            <input
+              className={`w-full h-12 pl-11 pr-4 bg-gray-50 dark:bg-[#211113] border rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all ${errors.country
                 ? "border-red-500 focus:ring-red-500/20 focus:border-red-500"
                 : "border-gray-200 dark:border-gray-700"
                 }`}
               id="country"
-              defaultValue=""
+              placeholder="e.g. Turkey"
+              type="text"
               {...register("country", { required: "Country is required" })}
-            >
-              <option disabled value="">
-                Select...
-              </option>
-              <option value="TR">Turkey</option>
-              <option value="DE">Germany</option>
-              <option value="US">United States</option>
-              <option value="JP">Japan</option>
-            </select>
-            <span className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-400">
-              <span className="material-symbols-outlined text-[20px]">
-                expand_more
-              </span>
-            </span>
+            />
           </div>
           {errors.country && (
             <p className="text-xs text-red-500">{errors.country.message}</p>
