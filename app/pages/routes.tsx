@@ -3,6 +3,8 @@ import { Link } from "react-router";
 import { useState, useMemo } from "react";
 import { SidebarNavigation } from "../components/SidebarNavigation";
 import { getAllLocations } from "../lib/api/location/getAllLocations";
+import { RouteTimeline } from "../components/RouteTimeline";
+import { RouteDetailPanel } from "../components/RouteDetailPanel";
 
 export function meta({ }: Route.MetaArgs) {
   return [
@@ -61,6 +63,10 @@ export default function Routes() {
   const [showDestinationDropdown, setShowDestinationDropdown] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [routesData, setRoutesData] = useState<RoutesResponse | null>(null);
+  const [selectedRoute, setSelectedRoute] = useState<Route | null>(null);
+  const [isDetailPanelOpen, setIsDetailPanelOpen] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const { data: locationsResponse } = getAllLocations();
 
@@ -109,12 +115,14 @@ export default function Routes() {
 
   const handleSearchRoutes = async () => {
     if (!selectedOrigin || !selectedDestination) {
-      alert("Lütfen hem origin hem de destination seçiniz.");
+      setErrorMessage("Please select both origin and destination locations to search for routes.");
+      setShowErrorModal(true);
       return;
     }
 
     if (selectedOrigin.id === selectedDestination.id) {
-      alert("Origin ve destination aynı olamaz.");
+      setErrorMessage("Origin and destination cannot be the same location. Please select different locations.");
+      setShowErrorModal(true);
       return;
     }
 
@@ -144,10 +152,20 @@ export default function Routes() {
 
       const data: RoutesResponse = await response.json();
       console.log("Routes found:", data);
+
+      // Check if routes data is empty
+      if (!data || data.length === 0) {
+        setErrorMessage("No routes found between the selected locations. Please try different origin and destination or check back later for new routes.");
+        setShowErrorModal(true);
+        setRoutesData([]);
+        return;
+      }
+
       setRoutesData(data);
     } catch (error) {
       console.error("Error searching routes:", error);
-      alert("Rotalar aranırken bir hata oluştu.");
+      setErrorMessage("Unable to search for routes at the moment. Please check your connection and try again.");
+      setShowErrorModal(true);
     } finally {
       setIsSearching(false);
     }
@@ -349,8 +367,8 @@ export default function Routes() {
                           {/* Flight Path Visual */}
                           <div className="flex flex-1 items-center justify-between w-full md:w-auto gap-4 md:gap-12">
                             <div className="text-center">
-                              <div className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
-                                {summary.origin.locationCode || summary.origin.name.substring(0, 3).toUpperCase()}
+                              <div className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+                                {summary.origin.name}
                               </div>
                               <div className="text-xs text-gray-400 font-medium uppercase mt-1">
                                 {summary.origin.city}
@@ -358,15 +376,12 @@ export default function Routes() {
                             </div>
 
                             <div className="flex-1 flex flex-col items-center px-4 relative min-w-[120px]">
-                              <div className="text-xs font-bold text-gray-400 mb-2">
-                                {summary.totalSteps} Step{summary.totalSteps > 1 ? 's' : ''}
-                              </div>
                               <div className="w-full h-[2px] bg-gray-200 dark:bg-gray-700 relative">
                                 <div className="absolute left-0 top-1/2 -translate-y-1/2 h-2 w-2 rounded-full bg-primary"></div>
                                 <div className="absolute right-0 top-1/2 -translate-y-1/2 h-2 w-2 rounded-full bg-gray-300 dark:bg-gray-600"></div>
                                 <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-surface-light dark:bg-surface-dark px-2 text-primary">
-                                  <span className={`material-symbols-outlined text-[20px] ${getRouteColor(summary.transportationTypes[0])}`}>
-                                    {getTransportationIcon(summary.transportationTypes[0])}
+                                  <span className="material-symbols-outlined text-[20px] text-primary">
+                                    flight
                                   </span>
                                 </span>
                               </div>
@@ -375,13 +390,9 @@ export default function Routes() {
                                   <span className="px-2 py-0.5 rounded-full bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-[10px] font-bold uppercase tracking-wide">
                                     Direct
                                   </span>
-                                ) : (
-                                  <span className="px-2 py-0.5 rounded-full bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 text-[10px] font-bold uppercase tracking-wide">
-                                    {summary.totalSteps - 1} Stop{summary.totalSteps > 2 ? 's' : ''}
-                                  </span>
-                                )}
+                                ) : null}
                                 {/* Transportation type badges */}
-                                {[...new Set(summary.transportationTypes)].map((type, typeIndex) => (
+                                {summary.transportationTypes.map((type, typeIndex) => (
                                   <span key={typeIndex} className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${
                                     type === 'FLIGHT' ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' :
                                     type === 'BUS' ? 'bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400' :
@@ -396,8 +407,8 @@ export default function Routes() {
                             </div>
 
                             <div className="text-center">
-                              <div className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
-                                {summary.destination.locationCode || summary.destination.name.substring(0, 3).toUpperCase()}
+                              <div className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+                                {summary.destination.name}
                               </div>
                               <div className="text-xs text-gray-400 font-medium uppercase mt-1">
                                 {summary.destination.city}
@@ -413,15 +424,12 @@ export default function Routes() {
                             <div className="flex items-center gap-4">
                               <div className="w-12 h-12 rounded-full bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-400">
                                 <span className="material-symbols-outlined">
-                                  {getTransportationIcon(summary.transportationTypes[0])}
+                                  flight
                                 </span>
                               </div>
                               <div>
                                 <div className="text-sm font-bold text-slate-900 dark:text-white">
                                   Route #{index + 1}
-                                </div>
-                                <div className="text-xs text-gray-400">
-                                  {summary.totalSteps} Transportation{summary.totalSteps > 1 ? 's' : ''}
                                 </div>
                               </div>
                             </div>
@@ -431,40 +439,21 @@ export default function Routes() {
                                   bookmark
                                 </span>
                               </button>
-                              <button className="cursor-pointer h-10 px-6 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-sm font-bold hover:bg-primary hover:text-white dark:hover:bg-primary dark:hover:text-white transition-all shadow-lg shadow-gray-200 dark:shadow-none">
+                              <button
+                                className="cursor-pointer h-10 px-6 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-sm font-bold hover:bg-primary hover:text-white dark:hover:bg-primary dark:hover:text-white transition-all shadow-lg shadow-gray-200 dark:shadow-none"
+                                onClick={() => {
+                                  setSelectedRoute(route);
+                                  setIsDetailPanelOpen(true);
+                                }}
+                              >
                                 Select
                               </button>
                             </div>
                           </div>
                         </div>
 
-                        {/* Route Steps Details */}
-                        <div className="px-6 pb-6">
-                          <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
-                            <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">Route Details:</h4>
-                            <div className="space-y-2">
-                              {route.steps.map((step, stepIndex) => (
-                                <div key={stepIndex} className="flex items-center gap-3 text-xs">
-                                  <span className={`material-symbols-outlined text-[16px] ${getRouteColor(step.type)}`}>
-                                    {getTransportationIcon(step.type)}
-                                  </span>
-                                  <span className="text-gray-600 dark:text-gray-400">
-                                    {step.origin.name} → {step.destination.name}
-                                  </span>
-                                  <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${
-                                    step.type === 'FLIGHT' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' :
-                                    step.type === 'BUS' ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' :
-                                    step.type === 'UBER' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400' :
-                                    step.type === 'SUBWAY' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400' :
-                                    'bg-gray-100 dark:bg-gray-900/30 text-gray-600 dark:text-gray-400'
-                                  }`}>
-                                    {step.type}
-                                  </span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
+                        {/* Route Steps Details - Vertical Timeline */}
+
                       </div>
                     );
                   })
@@ -491,6 +480,60 @@ export default function Routes() {
             </section>
           </div>
         </div>
+
+        {/* Route Detail Panel */}
+        <RouteDetailPanel
+          isOpen={isDetailPanelOpen}
+          route={selectedRoute}
+          onClose={() => {
+            setIsDetailPanelOpen(false);
+            setSelectedRoute(null);
+          }}
+        />
+
+        {/* Error Modal */}
+        {showErrorModal && (
+          <>
+            {/* Backdrop */}
+            <div className="fixed inset-0 bg-black/20 backdrop-blur-[1px] z-50 flex items-center justify-center p-4">
+              {/* Modal - Smaller and centered */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-sm w-full p-4 transform transition-all border border-gray-200 dark:border-gray-700">
+                {/* Header with icon and close */}
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
+                      <span className="material-symbols-outlined text-base text-orange-600 dark:text-orange-400">
+                        info
+                      </span>
+                    </div>
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                      Search Notice
+                    </h3>
+                  </div>
+                  <button
+                    onClick={() => setShowErrorModal(false)}
+                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">close</span>
+                  </button>
+                </div>
+
+                {/* Message */}
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-4 leading-relaxed">
+                  {errorMessage}
+                </p>
+
+                {/* Button */}
+                <button
+                  onClick={() => setShowErrorModal(false)}
+                  className="w-full h-9 bg-primary hover:bg-red-700 text-white text-sm font-medium rounded-md transition-colors duration-200"
+                >
+                  Got it
+                </button>
+              </div>
+            </div>
+          </>
+        )}
       </main>
     </div>
   );

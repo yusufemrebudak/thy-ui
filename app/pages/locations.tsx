@@ -240,7 +240,7 @@ export default function Locations() {
                         </div>
                       </th>
                       <th className="px-6 py-5 text-xs font-bold text-gray-500 uppercase tracking-wider w-32">
-                        LocationCode
+                        Location Code
                       </th>
                       <th className="px-6 py-5 text-xs font-bold text-gray-500 uppercase tracking-wider">
                         Name
