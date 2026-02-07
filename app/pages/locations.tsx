@@ -21,7 +21,7 @@ export function meta({ }: Route.MetaArgs) {
 
 interface Location {
   id: string;
-  code: string;
+  locationCode: string;
   airportCode: string;
   name: string;
   city: string;
@@ -58,7 +58,7 @@ export default function Locations() {
       // Call saveLocation API with request body
       const response = await saveLocationMutation.mutateAsync({
         body: {
-          code: data.code,
+          locationCode: data.code,
           name: data.name,
           city: data.city,
           country: data.country,
@@ -73,12 +73,17 @@ export default function Locations() {
         message: "Lokasyon başarıyla eklendi!",
         type: "success",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating location:", error);
+
+      // Get API error message or fallback to default message
+      const errorMessage = error?.response?.data?.message ||
+                          error?.message ||
+                          "Lokasyon eklenirken bir hata oluştu.";
 
       // Show error toast
       setToast({
-        message: "Lokasyon eklenirken bir hata oluştu.",
+        message: errorMessage,
         type: "error",
       });
     }
@@ -96,7 +101,7 @@ export default function Locations() {
           path: { id: selectedLocation.id }
         },
         body: {
-          code: data.code,
+          locationCode: data.code,
           name: data.name,
           city: data.city,
           country: data.country,
@@ -112,12 +117,17 @@ export default function Locations() {
         message: "Lokasyon başarıyla güncellendi!",
         type: "success",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating location:", error);
+
+      // Get API error message or fallback to default message
+      const errorMessage = error?.response?.data?.message ||
+                          error?.message ||
+                          "Lokasyon güncellenirken bir hata oluştu.";
 
       // Show error toast
       setToast({
-        message: "Lokasyon güncellenirken bir hata oluştu.",
+        message: errorMessage,
         type: "error",
       });
     }
@@ -144,10 +154,16 @@ export default function Locations() {
         message: "Lokasyon başarıyla silindi!",
         type: "success",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error deleting location:", error);
+
+      // Get API error message or fallback to default message
+      const errorMessage = error?.response?.data?.message ||
+                          error?.message ||
+                          "Lokasyon silinirken bir hata oluştu.";
+
       setToast({
-        message: "Lokasyon silinirken bir hata oluştu.",
+        message: errorMessage,
         type: "error",
       });
     }
@@ -224,7 +240,7 @@ export default function Locations() {
                         </div>
                       </th>
                       <th className="px-6 py-5 text-xs font-bold text-gray-500 uppercase tracking-wider w-32">
-                        Code
+                        LocationCode
                       </th>
                       <th className="px-6 py-5 text-xs font-bold text-gray-500 uppercase tracking-wider">
                         Name
@@ -311,7 +327,7 @@ export default function Locations() {
 
             {/* Footer */}
             <footer className="mt-8 mb-4 flex justify-between items-center text-xs text-gray-400">
-              <p>© 2026 Turkish Airlines Cargo. All rights reserved.</p>
+              <p>© 2026 Turkish Airlines. All rights reserved.</p>
               <div className="flex gap-4">
                 <a className="hover:text-primary transition-colors" href="#">
                   Privacy Policy

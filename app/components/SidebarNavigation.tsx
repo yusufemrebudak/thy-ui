@@ -27,7 +27,7 @@ export function SidebarNavigation() {
               TURKISH
             </span>
             <span className="text-xs text-gray-400 font-light tracking-widest mt-1">
-              AIRLINES LOGISTICS
+              AIRLINES ROUTE PLANNER
             </span>
           </div>
         </Link>

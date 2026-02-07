@@ -33,7 +33,7 @@ export function LocationForm({ onSubmit, initialData, formId = "location-form" }
           className="text-sm font-semibold text-gray-700 dark:text-gray-200"
           htmlFor="code"
         >
-          Location Code (IATA)
+          Location Code (IATA) <span className="text-gray-400">(Optional)</span>
         </label>
         <div className="relative group">
           <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-primary transition-colors">
@@ -51,7 +51,6 @@ export function LocationForm({ onSubmit, initialData, formId = "location-form" }
             placeholder="e.g. IST"
             type="text"
             {...register("code", {
-              required: "IATA code is required",
               minLength: {
                 value: 3,
                 message: "Must be exactly 3 characters",
@@ -71,7 +70,7 @@ export function LocationForm({ onSubmit, initialData, formId = "location-form" }
           <p className="text-xs text-red-500">{errors.code.message}</p>
         ) : (
           <p className="text-xs text-gray-400 dark:text-gray-500">
-            Must be a unique 3-letter IATA code.
+            Optional 3-letter IATA code.
           </p>
         )}
       </div>
