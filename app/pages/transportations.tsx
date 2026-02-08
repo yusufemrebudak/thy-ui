@@ -95,6 +95,10 @@ interface TransportationFormData {
   operatingDays: number[];
 }
 
+interface TransportationType {
+  code: string;
+}
+
 export default function Transportations() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -119,7 +123,7 @@ export default function Transportations() {
   const deleteTransportationMutation = deleteTransportation();
   const { data: transportationsResponse, isLoading, error, refetch } = getAllTransportations();
   const { data: locationsResponse } = getAllLocations();
-  const { data: transportationTypesResponse } = getTransportationTypes();
+  const { data: transportationTypesResponse, isLoading: isLoadingTypes, error: typesError } = getTransportationTypes();
 
   // Handle both direct array and wrapped response
   const transportationsData: Transportation[] = Array.isArray(transportationsResponse)
@@ -128,7 +132,7 @@ export default function Transportations() {
   const locations = Array.isArray(locationsResponse)
     ? locationsResponse
     : (locationsResponse as any)?.data || [];
-  const transportationTypes = Array.isArray(transportationTypesResponse)
+  const transportationTypes: TransportationType[] = Array.isArray(transportationTypesResponse)
     ? transportationTypesResponse
     : (transportationTypesResponse as any)?.data || [];
 
@@ -490,9 +494,12 @@ export default function Transportations() {
                   id="type"
                   value={formData.type}
                   onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                  disabled={isLoadingTypes}
                 >
-                  <option value="">Select Type...</option>
-                  {transportationTypes.map((type: any) => (
+                  <option value="">
+                    {isLoadingTypes ? "Loading types..." : typesError ? "Error loading types" : "Select Type..."}
+                  </option>
+                  {transportationTypes.map((type: TransportationType) => (
                     <option key={type.code} value={type.code}>
                       {type.code}
                     </option>
