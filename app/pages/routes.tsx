@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { useState, useMemo } from "react";
 import { SidebarNavigation } from "../components/SidebarNavigation";
 import { getAllLocations } from "../lib/api/location/getAllLocations";
+import { findRoutes } from "../lib/api/route/findRoutes";
 import { RouteTimeline } from "../components/RouteTimeline";
 import { RouteDetailPanel } from "../components/RouteDetailPanel";
 
@@ -59,6 +60,7 @@ export default function Routes() {
   const [destinationSearch, setDestinationSearch] = useState("");
   const [selectedOrigin, setSelectedOrigin] = useState<Location | null>(null);
   const [selectedDestination, setSelectedDestination] = useState<Location | null>(null);
+  const [selectedDate, setSelectedDate] = useState("");
   const [showOriginDropdown, setShowOriginDropdown] = useState(false);
   const [showDestinationDropdown, setShowDestinationDropdown] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
@@ -133,18 +135,22 @@ export default function Routes() {
         originName: selectedOrigin.name,
         destinationId: selectedDestination.id,
         destinationName: selectedDestination.name,
+        date: selectedDate || undefined,
       });
 
+      // Build URL with optional date parameter
+      let url = `http://localhost:8080/routes?originId=${selectedOrigin.id}&destinationId=${selectedDestination.id}`;
+      if (selectedDate) {
+        url += `&date=${selectedDate}`;
+      }
+
       // Direct API call to backend
-      const response = await fetch(
-        `http://localhost:8080/routes?originId=${selectedOrigin.id}&destinationId=${selectedDestination.id}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -242,7 +248,7 @@ export default function Routes() {
               </div>
               <div className="bg-surface-light dark:bg-surface-dark p-6 md:p-8 rounded-xl shadow-soft dark:shadow-none dark:border dark:border-gray-700">
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
-                  <div className="md:col-span-4 relative group">
+                  <div className="md:col-span-3 relative group">
                     <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 ml-1">
                       Origin
                     </label>
@@ -285,7 +291,7 @@ export default function Routes() {
                     </div>
                   </div>
                   {/* Destination */}
-                  <div className="md:col-span-4 relative group">
+                  <div className="md:col-span-3 relative group">
                     <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 ml-1">
                       Destination
                     </label>
@@ -325,6 +331,24 @@ export default function Routes() {
                           ))}
                         </div>
                       )}
+                    </div>
+                  </div>
+                  {/* Date */}
+                  <div className="md:col-span-3 relative group">
+                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 ml-1">
+                      Date <span className="text-gray-500">(Optional)</span>
+                    </label>
+                    <div className="relative">
+                      <span className="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary text-[24px] pointer-events-none transition-colors">
+                        calendar_today
+                      </span>
+                      <input
+                        className="w-full h-16 pl-14 pr-6 rounded-full bg-background-light dark:bg-background-dark border-0 text-lg font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-primary/20 placeholder:text-gray-300 transition-all"
+                        placeholder="Select date..."
+                        type="date"
+                        value={selectedDate}
+                        onChange={(e) => setSelectedDate(e.target.value)}
+                      />
                     </div>
                   </div>
                   {/* Search Button */}
