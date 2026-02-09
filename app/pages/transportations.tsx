@@ -9,6 +9,7 @@ import { getAllLocations } from "../lib/api/location/getAllLocations";
 import { saveTransportation } from "../lib/api/transportation/saveTransportation";
 import { updateTransportation } from "../lib/api/transportation/updateTransportation";
 import { deleteTransportation } from "../lib/api/transportation/deleteTransportation";
+import { getTransportationTypes } from "../lib/api/transportation/getTransportationTypes";
 
 export function meta({ }: Route.MetaArgs) {
   return [
@@ -118,6 +119,7 @@ export default function Transportations() {
   const deleteTransportationMutation = deleteTransportation();
   const { data: transportationsResponse, isLoading, error, refetch } = getAllTransportations();
   const { data: locationsResponse } = getAllLocations();
+  const { data: transportationTypesResponse } = getTransportationTypes();
 
   // Handle both direct array and wrapped response
   const transportationsData: Transportation[] = Array.isArray(transportationsResponse)
@@ -126,6 +128,9 @@ export default function Transportations() {
   const locations = Array.isArray(locationsResponse)
     ? locationsResponse
     : (locationsResponse as any)?.data || [];
+  const transportationTypes = Array.isArray(transportationTypesResponse)
+    ? transportationTypesResponse
+    : (transportationTypesResponse as any)?.data || [];
 
   // Sort transportations based on sortConfig
   const transportations = [...transportationsData].sort((a, b) => {
@@ -487,10 +492,11 @@ export default function Transportations() {
                   onChange={(e) => setFormData({ ...formData, type: e.target.value })}
                 >
                   <option value="">Select Type...</option>
-                  <option value="FLIGHT">FLIGHT</option>
-                  <option value="BUS">BUS</option>
-                  <option value="UBER">UBER</option>
-                  <option value="SUBWAY">SUBWAY</option>
+                  {transportationTypes.map((type: any) => (
+                    <option key={type.code} value={type.code}>
+                      {type.code}
+                    </option>
+                  ))}
                 </select>
               </div>
 

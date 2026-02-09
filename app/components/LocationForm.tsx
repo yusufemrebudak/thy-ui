@@ -17,10 +17,16 @@ export function LocationForm({ onSubmit, initialData, formId = "location-form" }
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<LocationFormData>({
     defaultValues: initialData,
   });
+
+  const handleLocationCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.toUpperCase().replace(/[^A-Z]/g, '');
+    setValue('code', value);
+  };
 
   return (
     <form
@@ -33,7 +39,7 @@ export function LocationForm({ onSubmit, initialData, formId = "location-form" }
           className="text-sm font-semibold text-gray-700 dark:text-gray-200"
           htmlFor="code"
         >
-          Location Code (IATA) <span className="text-gray-400">(Optional)</span>
+          Location Code <span className="text-gray-400">(Optional)</span>
         </label>
         <div className="relative group">
           <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-primary transition-colors">
@@ -47,30 +53,31 @@ export function LocationForm({ onSubmit, initialData, formId = "location-form" }
               : "border-gray-200 dark:border-gray-700"
               }`}
             id="code"
-            maxLength={3}
+            maxLength={5}
             placeholder="e.g. IST"
             type="text"
             {...register("code", {
               minLength: {
-                value: 3,
-                message: "Must be exactly 3 characters",
+                value: 2,
+                message: "Must be between 2-5 characters",
               },
               maxLength: {
-                value: 3,
-                message: "Must be exactly 3 characters",
+                value: 5,
+                message: "Must be between 2-5 characters",
               },
               pattern: {
-                value: /^[A-Za-z]{3}$/,
-                message: "Must confirm to IATA format (3 letters)",
+                value: /^[A-Z]{2,5}$/,
+                message: "Must contain only letters (2-5 characters)",
               },
             })}
+            onChange={handleLocationCodeChange}
           />
         </div>
         {errors.code ? (
           <p className="text-xs text-red-500">{errors.code.message}</p>
         ) : (
           <p className="text-xs text-gray-400 dark:text-gray-500">
-            Optional 3-letter IATA code.
+            Optional 2-5 letter location code (automatically converted to uppercase).
           </p>
         )}
       </div>
