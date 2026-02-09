@@ -139,7 +139,7 @@ export default function Routes() {
       });
 
       // Build URL with optional date parameter
-      let url = `http://localhost:8080/routes?originId=${selectedOrigin.id}&destinationId=${selectedDestination.id}`;
+      let url = `http://localhost:8080/api/v1/routes?originId=${selectedOrigin.id}&destinationId=${selectedDestination.id}`;
       if (selectedDate) {
         url += `&date=${selectedDate}`;
       }
